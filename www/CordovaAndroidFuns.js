@@ -83,3 +83,38 @@ exports.showLongToast = function(message, success, error){
 		'showLongToast',
 		[message]);
 };
+
+exports.storeImage = function(baseString, fileDir, fileName, success, error){
+	exec(success, error,
+		'CordovaAndroidFuns',
+		'storeImage',
+		[baseString, fileDir, fileName]);
+};
+
+exports.storeDocument = function(baseString, mimeType, fileDir, fileName, success, error){
+	exec(success, error,
+		'CordovaAndroidFuns',
+		'storeDocument',
+		[baseString, mimeType, fileDir, fileName]);
+};
+
+exports.storeAudio = function(baseString, mimeType, fileDir, fileName, success, error){
+	exec(success, error,
+		'CordovaAndroidFuns',
+		'storeAudio',
+		[baseString, mimeType, fileDir, fileName]);
+};
+
+exports.storeVideo = function(baseString, mimeType, fileDir, fileName, success, error){
+	exec(success, error,
+		'CordovaAndroidFuns',
+		'storeVideo',
+		[baseString, mimeType, fileDir, fileName]);
+};
+
+exports.getDataFromFile = function(mimeType, success, error){
+	exec(success, error,
+		'CordovaAndroidFuns',
+		'getDataFromFile',
+		[mimeType]);
+};
