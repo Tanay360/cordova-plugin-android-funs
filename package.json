@@ -1,0 +1,21 @@
+{
+  "name": "cordova-plugin-android-funs",
+  "version": "0.1.1",
+  "description": "Cordova plugin for saving base64 image DataURI to the gallery in Android",
+  "cordova": {
+    "id": "cordova-plugin-android-funs",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "Tanay Gupta",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tanay360/cordova-plugin-android-mediastore.git"
+  }
+}
