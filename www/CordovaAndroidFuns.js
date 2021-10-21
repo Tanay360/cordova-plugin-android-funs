@@ -4,7 +4,7 @@ exports.store = function (fileName, textString, success, error) {
     exec(success, error, 
         'CordovaAndroidFuns', 
         'store', 
-        [textString, fileName]);
+        [fileName, textString]);
 };
 
 exports.read = function(fileName, success, error) {

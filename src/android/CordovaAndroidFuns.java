@@ -30,7 +30,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
         if (action.equals("store")) {
-            this.store(args.getString(1), args.getString(0), callbackContext);
+            this.store(args.getString(0), args.getString(1), callbackContext);
             return true;
         } else if (action.equals("read")) {
             this.read(args.getString(0), callbackContext);
@@ -69,7 +69,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
         return false;
     }
 
-    private void store(String textString, String fileName, CallbackContext callbackContext) {
+    private void store(String fileName, String textString, CallbackContext callbackContext) {
         final CordovaInterface _cordova = cordova;
 
         cordova.getThreadPool().execute(new Runnable() {
