@@ -118,3 +118,10 @@ exports.getDataFromFile = function(mimeType, success, error){
 		'getDataFromFile',
 		[mimeType]);
 };
+
+exports.getDeviceVersion = function(success, error){
+	exec(success, error,
+		'CordovaAndroidFuns',
+		'getDeviceVersion',
+		[]);
+};

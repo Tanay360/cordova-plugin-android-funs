@@ -81,6 +81,8 @@ public class CordovaAndroidFuns extends CordovaPlugin {
             this.storeVideo(args.getString(0), args.getString(1), args.getString(2), args.getString(3), callbackContext);
         } else if (action.equals("getDataFromFile")){
             this.getDataFromFile(args.getString(0), callbackContext);
+        } else if (action.equals("getDeviceVersion")){
+            this.getDeviceVersion(callbackContext);
         } else {
             return false;
         }
@@ -605,7 +607,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                         contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, fileDir);
                         contentValues.put(MediaStore.MediaColumns.IS_PENDING, 1);
 
-                        Uri content = contentResolver.insert(MediaStore.Files.getContentUri(Environment.DIRECTORY_DOCUMENTS), contentValues);
+                        Uri content = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues);
 
                         OutputStream out = contentResolver.openOutputStream(content);
                         out.write(text.getBytes(StandardCharsets.UTF_8));
@@ -618,7 +620,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                         callbackContext.success(content.getPath());
                     } else {
                         if(cordova.hasPermission(WRITE_EXTERNAL_STORAGE)) {
-                            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                             File dir = new File(path + "/" + fileDir);
                             dir.mkdirs();
                             File file = new File(dir, fileName);
@@ -652,6 +654,25 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                 intent.setType(mimeType);
                 fileReadContext = callbackContext;
                 cordova.startActivityForResult(CordovaAndroidFuns.this, intent, SELECT_PHOTO_CODE);
+            }
+        });
+
+    }
+
+    private void getDeviceVersion(CallbackContext callbackContext) {
+        final CordovaInterface _cordova = cordova;
+
+        cordova.getThreadPool().execute(new Runnable() {
+            final CordovaInterface cordova = _cordova;
+
+            @Override
+            public void run() {
+                try {
+                    callbackContext.success(Build.VERSION.SDK_INT);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    callbackContext.error(e.getMessage());
+                }
             }
         });
 
