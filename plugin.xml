@@ -3,9 +3,9 @@
     xmlns="http://apache.org/cordova/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <name>CordovaAndroidFuns</name>
-    <description>Provides a store() function that saves a base64 png bytestring to the gallery as a png file.</description>
+    <description>This simple Cordova plugin allows a lot of functionality, namely, storing and reading files from external and internal storage, saving settings, creating toast messages, and getting the sdk version of the android phone.</description>
     <license>MIT</license>
-    <keywords>cordova,android,mediastore,image</keywords>
+    <keywords>cordova,android,mediastore,external-storage</keywords>
     <js-module name="CordovaAndroidFuns" src="www/CordovaAndroidFuns.js">
         <clobbers target="cordova.plugins.CordovaAndroidFuns" />
     </js-module>

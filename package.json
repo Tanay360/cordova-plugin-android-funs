@@ -1,7 +1,7 @@
 {
   "name": "cordova-plugin-android-funs",
-  "version": "0.1.1",
-  "description": "Cordova plugin for saving base64 image DataURI to the gallery in Android",
+  "version": "0.1.0",
+  "description": "This simple Cordova plugin allows a lot of functionality, namely, storing and reading files from external and internal storage, saving settings, creating toast messages, and getting the sdk version of the android phone",
   "cordova": {
     "id": "cordova-plugin-android-funs",
     "platforms": [
@@ -10,12 +10,14 @@
   },
   "keywords": [
     "ecosystem:cordova",
-    "cordova-android"
+    "cordova-android",
+	"cordova-android-external-storage",
+	"cordova-android-mediastore"
   ],
   "author": "Tanay Gupta",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Tanay360/cordova-plugin-android-mediastore.git"
+    "url": "git+https://github.com/Tanay360/cordova-plugin-android-funs.git"
   }
 }
