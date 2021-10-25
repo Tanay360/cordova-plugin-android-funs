@@ -125,3 +125,25 @@ exports.getDeviceVersion = function(success, error){
 		'getDeviceVersion',
 		[]);
 };
+
+
+exports.createImageDialog = function(filePath, alertText, success, error) {
+    exec(success, error,
+        'CordovaAndroidFuns',
+        'createImageDialog',
+        [filePath, alertText]);  
+};
+
+exports.simpleGet = function(url, success, error){
+	exec(success, error,
+		'CordovaAndroidFuns',
+		'simpleGet',
+		[url]);
+};
+
+exports.simpleJsonPost = function(url, jsonString, success, error){
+	exec(success, error,
+		'CordovaAndroidFuns',
+		'simpleJsonPost',
+		[url, jsonString]);
+};

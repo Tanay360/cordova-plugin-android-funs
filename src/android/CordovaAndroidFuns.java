@@ -6,45 +6,59 @@ import org.apache.cordova.CallbackContext;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Scanner;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class CordovaAndroidFuns extends CordovaPlugin {
 
     private static final String WRITE_EXTERNAL_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
     public static final int WRITE_CODE = 0;
     private static final String TAG = "CordovaAndroidFuns";
-    private int SELECT_PHOTO_CODE = 1;
+    private final int SELECT_PHOTO_CODE = 1;
 
+    @SuppressWarnings("IfCanBeSwitch")
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
         if (action.equals("store")) {
@@ -79,14 +93,155 @@ public class CordovaAndroidFuns extends CordovaPlugin {
             this.storeAudio(args.getString(0), args.getString(1), args.getString(2), args.getString(3), callbackContext);
         } else if (action.equals("storeVideo")) {
             this.storeVideo(args.getString(0), args.getString(1), args.getString(2), args.getString(3), callbackContext);
-        } else if (action.equals("getDataFromFile")){
+        } else if (action.equals("getDataFromFile")) {
             this.getDataFromFile(args.getString(0), callbackContext);
-        } else if (action.equals("getDeviceVersion")){
+        } else if (action.equals("getDeviceVersion")) {
             this.getDeviceVersion(callbackContext);
+        } else if (action.equals("createImageDialog")) {
+            this.showDialogImage(args.getString(0), args.getString(1), callbackContext);
+        } else if (action.equals("simpleGet")) {
+            this.makeSimpleNetworkGetRequest(args.getString(0), callbackContext);
+        } else if (action.equals("simpleJsonPost")) {
+            this.makeSimpleNetworkPostRequest(args.getString(0), args.getString(0), callbackContext);
         } else {
             return false;
         }
         return true;
+    }
+
+    private void makeSimpleNetworkPostRequest(String stringUrl, String body, CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(() -> {
+            try {
+                URL url = new URL(stringUrl);
+                URLConnection con = url.openConnection();
+                HttpURLConnection http = (HttpURLConnection) con;
+                http.setRequestMethod("POST"); // PUT is another valid option
+                http.setDoOutput(true);
+                byte[] out = body.getBytes(StandardCharsets.UTF_8);
+                int length = out.length;
+
+                http.setFixedLengthStreamingMode(length);
+                http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                http.connect();
+                try (OutputStream os = http.getOutputStream()) {
+                    os.write(out);
+                }
+                StringBuilder result = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(http.getInputStream()))) {
+                    for (String line; (line = reader.readLine()) != null; ) {
+                        result.append(line);
+                    }
+                }
+                callbackContext.success(result.toString());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                callbackContext.error(e.getMessage());
+            }
+        });
+
+    }
+
+    private void makeSimpleNetworkGetRequest(String stringUrl, CallbackContext callbackContext) {
+
+        cordova.getThreadPool().execute(() -> {
+            try {
+
+                StringBuilder result = new StringBuilder();
+                URL url = new URL(stringUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(conn.getInputStream()))) {
+                    for (String line; (line = reader.readLine()) != null; ) {
+                        result.append(line);
+                    }
+                }
+                callbackContext.success(result.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+                callbackContext.error(e.getMessage());
+            }
+        });
+    }
+
+    private void showDialogImage(String filePath, String alertText, CallbackContext callbackContext) {
+        final CordovaInterface _cordova = cordova;
+
+        cordova.getThreadPool().execute(new Runnable() {
+            final CordovaInterface cordova = _cordova;
+
+            @SuppressLint("SetTextI18n")
+            @Override
+            public void run() {
+                try {
+                    // XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+                    // XmlPullParser parser = factory.newPullParser();
+                    AssetManager am = cordova.getContext().getAssets();
+                    // InputStream is = am.open("alert_dialog.xml");
+                    InputStream image = am.open("www/" + filePath);
+                    Bitmap bitmap = BitmapFactory.decodeStream(image);
+                    // parser.setInput(is, null);
+                    cordova.getActivity().runOnUiThread(() -> {
+                        LinearLayout ll = new LinearLayout(cordova.getContext());
+                        ll.setOrientation(LinearLayout.VERTICAL);
+                        final float scale = cordova.getContext().getResources().getDisplayMetrics().density;
+                        int dps = 200;
+                        int pixels = (int) (dps * scale + 0.5f);
+                        ImageView imageView = new ImageView(cordova.getContext());
+                        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(pixels, pixels);
+                        imageParams.gravity = Gravity.CENTER_HORIZONTAL;
+                        imageParams.weight = 1.0f;
+                        imageView.setLayoutParams(imageParams);
+                        imageView.setImageBitmap(bitmap);
+                        ll.addView(imageView);
+                        TextView textView1 = new TextView(cordova.getContext());
+                        textView1.setText(alertText);
+                        textView1.setTextColor(Color.WHITE);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            textView1.setTextAppearance(android.R.style.TextAppearance_Large);
+                        } else {
+                            textView1.setTextSize(20);
+                        }
+                        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        int margin = (int) (16 * scale + 0.5f);
+                        textParams.setMargins(margin, margin, margin, 0);
+                        textView1.setLayoutParams(textParams);
+                        ll.addView(textView1);
+                        Button okBtn = new Button(cordova.getContext());
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            okBtn.setTextAppearance(android.R.style.TextAppearance_Large);
+                        } else {
+                            okBtn.setTextSize(20);
+                        }
+                        okBtn.setText("OK");
+                        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        buttonParams.gravity = Gravity.END;
+                        buttonParams.weight = 1.0f;
+                        okBtn.setLayoutParams(buttonParams);
+                        ll.addView(okBtn);
+
+
+//                        LinearLayout v = (LinearLayout) LayoutInflater.from(cordova.getContext()).inflate(parser, null);
+//                        ImageView img = (ImageView) v.getChildAt(0);
+//                        img.setImageBitmap(bitmap);
+//                        TextView textView = (TextView) v.getChildAt(1);
+//                        textView.setText(alertText);
+                        AlertDialog.Builder builder = new AlertDialog.Builder(cordova.getContext());
+                        builder.setView(ll);
+                        AlertDialog dialog = builder.create();
+//                        Button button = (Button) v.getChildAt(2);
+                        okBtn.setOnClickListener(v1 -> dialog.cancel());
+                        dialog.show();
+                        callbackContext.success();
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    callbackContext.error(e.getMessage());
+                }
+            }
+        });
     }
 
     private void store(String textString, String fileName, CallbackContext callbackContext) {
@@ -147,7 +302,11 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                     callbackContext.success(sb.toString().trim());
                 } catch (Exception e) {
                     e.printStackTrace();
-                    callbackContext.error(e.getMessage());
+                    if (e.getMessage() == null) {
+                        callbackContext.error("Some error occurred");
+                    } else {
+                        callbackContext.error(e.getMessage());
+                    }
                 }
             }
         });
@@ -219,7 +378,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
         });
     }
 
-    private void storePreference(final String key, final String value, CallbackContext callbackContext){
+    private void storePreference(final String key, final String value, CallbackContext callbackContext) {
         final CordovaInterface _cordova = cordova;
 
         cordova.getThreadPool().execute(new Runnable() {
@@ -243,7 +402,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
         });
     }
 
-    private void storePreference(final String key, final boolean value, CallbackContext callbackContext){
+    private void storePreference(final String key, final boolean value, CallbackContext callbackContext) {
         final CordovaInterface _cordova = cordova;
 
         cordova.getThreadPool().execute(new Runnable() {
@@ -267,7 +426,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
         });
     }
 
-    private void storePreference(final String key, final int value, CallbackContext callbackContext){
+    private void storePreference(final String key, final int value, CallbackContext callbackContext) {
         final CordovaInterface _cordova = cordova;
 
         cordova.getThreadPool().execute(new Runnable() {
@@ -291,7 +450,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
         });
     }
 
-    private void storePreference(final String key, final float value, CallbackContext callbackContext){
+    private void storePreference(final String key, final float value, CallbackContext callbackContext) {
         final CordovaInterface _cordova = cordova;
 
         cordova.getThreadPool().execute(new Runnable() {
@@ -315,7 +474,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
         });
     }
 
-    private void storePreference(final String key, final long value, CallbackContext callbackContext){
+    private void storePreference(final String key, final long value, CallbackContext callbackContext) {
         final CordovaInterface _cordova = cordova;
 
         cordova.getThreadPool().execute(new Runnable() {
@@ -357,7 +516,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                         callbackContext.success(Float.toString(sharedPreferences.getFloat(key, -1f)));
                     } else if ("string".equalsIgnoreCase(type)) {
                         callbackContext.success(sharedPreferences.getString(key, "not found"));
-                    } else if ("boolean".equalsIgnoreCase(type)){
+                    } else if ("boolean".equalsIgnoreCase(type)) {
                         callbackContext.success(Boolean.toString(sharedPreferences.getBoolean(key, false)));
                     } else {
                         callbackContext.error(type + " type does not exists");
@@ -402,9 +561,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
             @Override
             public void run() {
                 try {
-                    cordova.getActivity().runOnUiThread(() -> {
-                        Toast.makeText(cordova.getContext(), message, Toast.LENGTH_LONG).show();
-                    });
+                    cordova.getActivity().runOnUiThread(() -> Toast.makeText(cordova.getContext(), message, Toast.LENGTH_LONG).show());
                     callbackContext.success();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -448,7 +605,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                         contentResolver.update(contentUri, contentValues, null, null);
                         callbackContext.success(contentUri.getPath());
                     } else {
-                        if(cordova.hasPermission(WRITE_EXTERNAL_STORAGE)) {
+                        if (cordova.hasPermission(WRITE_EXTERNAL_STORAGE)) {
                             File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
                             File dir = new File(path + "/" + fileDir);
                             dir.mkdirs();
@@ -506,7 +663,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                         contentResolver.update(content, contentValues, null, null);
                         callbackContext.success(content.getPath());
                     } else {
-                        if(cordova.hasPermission(WRITE_EXTERNAL_STORAGE)) {
+                        if (cordova.hasPermission(WRITE_EXTERNAL_STORAGE)) {
                             File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
                             File dir = new File(path + "/" + fileDir);
                             dir.mkdirs();
@@ -564,7 +721,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                         contentResolver.update(imageUri, contentValues, null, null);
                         callbackContext.success(imageUri.getPath());
                     } else {
-                        if(cordova.hasPermission(WRITE_EXTERNAL_STORAGE)) {
+                        if (cordova.hasPermission(WRITE_EXTERNAL_STORAGE)) {
                             File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
                             File dir = new File(path + "/" + fileDir);
                             dir.mkdirs();
@@ -619,7 +776,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                         contentResolver.update(content, contentValues, null, null);
                         callbackContext.success(content.getPath());
                     } else {
-                        if(cordova.hasPermission(WRITE_EXTERNAL_STORAGE)) {
+                        if (cordova.hasPermission(WRITE_EXTERNAL_STORAGE)) {
                             File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                             File dir = new File(path + "/" + fileDir);
                             dir.mkdirs();
@@ -660,19 +817,13 @@ public class CordovaAndroidFuns extends CordovaPlugin {
     }
 
     private void getDeviceVersion(CallbackContext callbackContext) {
-        final CordovaInterface _cordova = cordova;
 
-        cordova.getThreadPool().execute(new Runnable() {
-            final CordovaInterface cordova = _cordova;
-
-            @Override
-            public void run() {
-                try {
-                    callbackContext.success(Build.VERSION.SDK_INT);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    callbackContext.error(e.getMessage());
-                }
+        cordova.getThreadPool().execute(() -> {
+            try {
+                callbackContext.success(Build.VERSION.SDK_INT);
+            } catch (Exception e) {
+                e.printStackTrace();
+                callbackContext.error(e.getMessage());
             }
         });
 
@@ -687,14 +838,14 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                 Log.e(TAG, "Some error occurred!");
                 return;
             }
-            if (resultCode == Activity.RESULT_OK){
+            if (resultCode == Activity.RESULT_OK) {
                 Uri data = intent.getData();
                 if (data != null) {
                     try {
                         InputStream is = cordova.getActivity().getContentResolver().openInputStream(data);
                         StringBuilder sb = new StringBuilder();
                         Scanner sc = new Scanner(is);
-                        while (sc.hasNextLine()){
+                        while (sc.hasNextLine()) {
                             sb.append(sc.nextLine()).append("\n");
                         }
                         fileReadContext.success(sb.toString().trim());
@@ -713,17 +864,15 @@ public class CordovaAndroidFuns extends CordovaPlugin {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void getWritePermission(int requestCode) {
         cordova.requestPermission(this, requestCode, WRITE_EXTERNAL_STORAGE);
     }
 
     public void onRequestPermissionResult(int requestCode, String[] permissions,
-                                          int[] grantResults) throws JSONException
-    {
-        for(int r:grantResults)
-        {
-            if(r == PackageManager.PERMISSION_DENIED)
-            {
+                                          int[] grantResults) {
+        for (int r : grantResults) {
+            if (r == PackageManager.PERMISSION_DENIED) {
                 Log.e(TAG, "onRequestPermissionResult: Permission(s) denied");
                 Toast.makeText(cordova.getContext(), "Permission denied! Grant permission and try again!", Toast.LENGTH_SHORT).show();
                 return;
