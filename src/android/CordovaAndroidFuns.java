@@ -29,6 +29,7 @@ import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -115,7 +116,7 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                 URL url = new URL(stringUrl);
                 URLConnection con = url.openConnection();
                 HttpURLConnection http = (HttpURLConnection) con;
-                http.setRequestMethod("POST"); // PUT is another valid option
+                http.setRequestMethod("POST");
                 http.setDoOutput(true);
                 byte[] out = body.getBytes(StandardCharsets.UTF_8);
                 int length = out.length;
@@ -157,6 +158,10 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                     for (String line; (line = reader.readLine()) != null; ) {
                         result.append(line);
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    callbackContext.error(e.getMessage());
+                    return;
                 }
                 callbackContext.success(result.toString());
             } catch (Exception e) {
@@ -176,17 +181,15 @@ public class CordovaAndroidFuns extends CordovaPlugin {
             @Override
             public void run() {
                 try {
-                    // XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-                    // XmlPullParser parser = factory.newPullParser();
                     AssetManager am = cordova.getContext().getAssets();
-                    // InputStream is = am.open("alert_dialog.xml");
                     InputStream image = am.open("www/" + filePath);
                     Bitmap bitmap = BitmapFactory.decodeStream(image);
-                    // parser.setInput(is, null);
                     cordova.getActivity().runOnUiThread(() -> {
                         LinearLayout ll = new LinearLayout(cordova.getContext());
                         ll.setOrientation(LinearLayout.VERTICAL);
                         final float scale = cordova.getContext().getResources().getDisplayMetrics().density;
+                        int padding = (int) (16 * scale + 0.5f);
+                        ll.setPadding(padding, padding, padding, padding);
                         int dps = 200;
                         int pixels = (int) (dps * scale + 0.5f);
                         ImageView imageView = new ImageView(cordova.getContext());
@@ -204,9 +207,10 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                         } else {
                             textView1.setTextSize(20);
                         }
-                        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                         int margin = (int) (16 * scale + 0.5f);
                         textParams.setMargins(margin, margin, margin, 0);
+                        textView1.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                         textView1.setLayoutParams(textParams);
                         ll.addView(textView1);
                         Button okBtn = new Button(cordova.getContext());
@@ -221,17 +225,9 @@ public class CordovaAndroidFuns extends CordovaPlugin {
                         buttonParams.weight = 1.0f;
                         okBtn.setLayoutParams(buttonParams);
                         ll.addView(okBtn);
-
-
-//                        LinearLayout v = (LinearLayout) LayoutInflater.from(cordova.getContext()).inflate(parser, null);
-//                        ImageView img = (ImageView) v.getChildAt(0);
-//                        img.setImageBitmap(bitmap);
-//                        TextView textView = (TextView) v.getChildAt(1);
-//                        textView.setText(alertText);
                         AlertDialog.Builder builder = new AlertDialog.Builder(cordova.getContext());
                         builder.setView(ll);
                         AlertDialog dialog = builder.create();
-//                        Button button = (Button) v.getChildAt(2);
                         okBtn.setOnClickListener(v1 -> dialog.cancel());
                         dialog.show();
                         callbackContext.success();
@@ -573,8 +569,6 @@ public class CordovaAndroidFuns extends CordovaPlugin {
 
 
     private void storeAudio(String bytes, String mimeType, String fileDir, String fileName, CallbackContext callbackContext) {
-        // fileDir ex. /Pictures
-        // fileName ex. capture.jpg
         final CordovaInterface _cordova = cordova;
 
         cordova.getThreadPool().execute(new Runnable() {
@@ -631,8 +625,6 @@ public class CordovaAndroidFuns extends CordovaPlugin {
     }
 
     private void storeVideo(String bytes, String mimeType, String fileDir, String fileName, CallbackContext callbackContext) {
-        // fileDir ex. /Pictures
-        // fileName ex. capture.jpg
         final CordovaInterface _cordova = cordova;
 
         cordova.getThreadPool().execute(new Runnable() {
@@ -689,8 +681,6 @@ public class CordovaAndroidFuns extends CordovaPlugin {
     }
 
     private void storeImage(String bytes, String fileDir, String fileName, CallbackContext callbackContext) {
-        // fileDir ex. /Pictures
-        // fileName ex. capture.jpg
         final CordovaInterface _cordova = cordova;
 
         cordova.getThreadPool().execute(new Runnable() {
@@ -745,8 +735,6 @@ public class CordovaAndroidFuns extends CordovaPlugin {
 
 
     private void storeDocument(String text, String mimeType, String fileDir, String fileName, CallbackContext callbackContext) {
-        // fileDir ex. /Pictures
-        // fileName ex. capture.jpg
         final CordovaInterface _cordova = cordova;
 
         cordova.getThreadPool().execute(new Runnable() {
